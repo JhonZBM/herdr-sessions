@@ -18,6 +18,7 @@ Folders are ordered by their newest session; sessions inside a folder are newest
 ## How it behaves
 
 - `Ctrl+Shift+S` (`mod.open:sessions`) opens the popup; pressing it again or Esc closes it. Opening a session closes it too.
+- Click the "Sessions" button in the top bar (if the layout has it): opens the popup, same as `Ctrl+Shift+S`.
 - Click a folder heading: fold or unfold it. While searching, every folder with a match is shown unfolded.
 - Hover a heading: the count turns into a sort icon and a "+"; each button gets a `raised` fill and `foreground` text on its own hover, and clicking one does not fold the group.
 - "+": `tab.new` with the folder name as `name`, the group's `cwd` as `folder` and `argv: ["claude"]`; tooltip "New session in <folder>"; the popup closes.
@@ -35,6 +36,7 @@ Folders are ordered by their newest session; sessions inside a folder are newest
 - `mods/sessions/main.js`: a `View` using `gpui-kit` and `gpui-base` (`v_flex`, `h_flex`, `InputState`, `Input`, `overflow_y_scrollbar`), and from `herdr`: `exec`, `home`, `run`, `theme`, `props`, `closeOverlay`. `props()?.overlay` (`props()` can be null) tells the popup from a docked block: the popup uses a fixed 520 px height, `popover` fill, focuses the search and closes itself when a session opens. All colors come from `theme()`.
 - `mods/sessions/index.js`: plain Node, no dependencies. Run with `exec("node", [<home>/.config/herdr-app/mods/sessions/index.js])`. For every `~/.claude/projects/<folder>/*.jsonl` it reads the first 48 KB and the last 96 KB, parses each complete JSON line and takes `cwd`, `gitBranch`, the last `ai-title`, `last-prompt` and `agent-name`. It prints a JSON array of `{id, cwd, project, worktree, title, name, last, branch, mtime}` sorted by `mtime` descending. Transcripts without a `cwd` are skipped. A path containing `.claude/worktrees` marks a worktree.
 - Icons (`refresh.svg`, `external.svg`, `chevron-down.svg`, `chevron-right.svg`, `plus.svg`, `sort.svg`, `check.svg`): one-color SVGs tinted by the text color. Hover uses `on_hover` with one state field and calls `cx.notify()` only when it changes; no timers.
+- `mods/sessions-button/` (`main.js`, `mod.json` with `"place": "none"`, `history.svg`): a 26 px high button, 12 px text, 8 px horizontal padding, 14 px icon plus the label "Sessions"; fill `chrome`, text `muted`, hover `hover` fill and `foreground` text, same bottom border as the tab bar; tooltip "Session history (Ctrl+Shift+S)". Click: `run("mod.open", { name: "sessions" })`; its mouse-down is stopped so it does not start a window drag. `h_flex` comes from `gpui-base`, not `gpui-kit`. In a layout it sits in a `tabbar` row (112 px) to the left of the `tabs` block: `{ "id": "tabbar", "type": "row", "size": { "px": 30 }, "window_drag": true, "children": [ <sessions-button block, 112 px>, <tabs block, weight 1> ] }`; use the height the `tabs` block already has.
 - Optional docked mode: a layout block `{ "id": "sessions", "type": "block", "content": { "mod": "sessions" }, "size": { "px": 300 }, "hidden": true }` right after the sidebar, shown with `layout.toggle:sessions`.
 
 ## Watch out

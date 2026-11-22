@@ -18,6 +18,7 @@ A [herdr](https://herdr.dev) mod: a popup with every Claude Code session you hav
 - **Search** across titles, last prompts, folders and branches.
 - **One click resumes** the session (`claude --resume`) in a new tab, in the right folder.
 - **Shortcuts to claude.ai** Projects and Chats, which live in the cloud and cannot be read locally.
+- **A visible button** in the top bar, plus `Ctrl+Shift+S`, so you never have to remember a key.
 - **Popup or docked**: a popup by default (`Ctrl+Shift+S`), so it fits any layout; it can also be docked as a side panel.
 - **Follows your theme**: it only uses the active layout's colors.
 - **Light by design**: one Node script, no dependencies, no timers and no background process. It reads on open and when you press refresh.
@@ -30,13 +31,23 @@ Requirements: herdr-app (open it once), Node and Claude Code. Built and tested o
 
 > Add the herdr-sessions mod from https://github.com/JhonZBM/herdr-sessions. Read RECIPE.md and every file before installing.
 
-**Manually:** copy `mods/sessions/` into `~/.config/herdr-app/mods/` and check it:
+**Manually:** copy `mods/sessions/` (and `mods/sessions-button/`, optional) into `~/.config/herdr-app/mods/` and check it:
 
 ```sh
 herdr-app check ~/.config/herdr-app/mods/sessions
 ```
 
-Merge `mods/sessions/keys.json` into your `keys.json` (it binds `Ctrl+Shift+S`), or run `herdr-app do mod.open '{"name":"sessions"}'`.
+Merge `mods/sessions/keys.json` into your `keys.json` (it binds `Ctrl+Shift+S`), add the button below, or run `herdr-app do mod.open '{"name":"sessions"}'`.
+
+**A visible button (optional):** `mods/sessions-button/` is a tiny "Sessions" button for the top bar. Herdr's shipped layouts cannot be edited, so clone yours (`layout.clone {"name":"main","as":"my-main"}`) and wrap its `tabs` block in a row with the button. Use the height your `tabs` block already has (30 px in `main`):
+
+```json
+{ "id": "tabbar", "type": "row", "size": { "px": 30 }, "window_drag": true,
+  "children": [
+    { "id": "sessions-button", "type": "block", "content": { "mod": "sessions-button" }, "size": { "px": 112 } },
+    { "id": "tabs", "type": "block", "content": { "mod": "tabs" }, "size": { "weight": 1 } }
+  ] }
+```
 
 **Docked panel (optional):** add a block to your layout, right after the sidebar, to keep it always visible:
 

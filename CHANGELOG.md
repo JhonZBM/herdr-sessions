@@ -10,5 +10,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - `keys.json` with the default shortcut.
 - Hover actions on each folder heading: new Claude session in that folder, and a menu to sort groups (recent or name) or turn grouping off. The choice is saved in `localStorage`. The menu closes on Esc, on a click outside it or after choosing an option.
 - SVG chevrons next to the folder names.
+- `sessions-button`: a small "Sessions" button for the top bar that opens the popup, so the entry point is visible.
 - Resume a session in a new tab with one click.
 - Shortcuts to claude.ai Projects and Chats.

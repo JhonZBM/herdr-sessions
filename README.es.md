@@ -18,6 +18,7 @@ Un mod de [herdr](https://herdr.dev): un popup con todas las sesiones de Claude 
 - **Búsqueda** por título, último prompt, carpeta y rama.
 - **Un clic la reanuda** (`claude --resume`) en una pestaña nueva, en la carpeta correcta.
 - **Accesos a claude.ai** Projects y Chats, que viven en la nube y no se pueden leer en local.
+- **Un botón visible** en la barra superior, además de `Ctrl+Shift+S`, para no tener que recordar una tecla.
 - **Popup o acoplado**: popup por defecto (`Ctrl+Shift+S`), así encaja en cualquier layout; también puede acoplarse como panel lateral.
 - **Sigue tu tema**: solo usa los colores del layout activo.
 - **Ligero por diseño**: un script de Node, sin dependencias, sin temporizadores y sin proceso en segundo plano. Lee al abrirse y al pulsar refrescar.
@@ -30,13 +31,23 @@ Requisitos: herdr-app (ábrela una vez), Node y Claude Code. Hecho y probado en 
 
 > Add the herdr-sessions mod from https://github.com/JhonZBM/herdr-sessions. Read RECIPE.md and every file before installing.
 
-**A mano:** copia `mods/sessions/` en `~/.config/herdr-app/mods/` y compruébalo:
+**A mano:** copia `mods/sessions/` (y `mods/sessions-button/`, opcional) en `~/.config/herdr-app/mods/` y compruébalo:
 
 ```sh
 herdr-app check ~/.config/herdr-app/mods/sessions
 ```
 
-Fusiona `mods/sessions/keys.json` en tu `keys.json` (asigna `Ctrl+Shift+S`), o ejecuta `herdr-app do mod.open '{"name":"sessions"}'`.
+Fusiona `mods/sessions/keys.json` en tu `keys.json` (asigna `Ctrl+Shift+S`), añade el botón de abajo, o ejecuta `herdr-app do mod.open '{"name":"sessions"}'`.
+
+**Un botón visible (opcional):** `mods/sessions-button/` es un botoncito "Sessions" para la barra superior. Los layouts que trae herdr no se pueden editar, así que clona el tuyo (`layout.clone {"name":"main","as":"my-main"}`) y envuelve su bloque `tabs` en una fila con el botón. Usa la altura que ya tenga tu bloque `tabs` (30 px en `main`):
+
+```json
+{ "id": "tabbar", "type": "row", "size": { "px": 30 }, "window_drag": true,
+  "children": [
+    { "id": "sessions-button", "type": "block", "content": { "mod": "sessions-button" }, "size": { "px": 112 } },
+    { "id": "tabs", "type": "block", "content": { "mod": "tabs" }, "size": { "weight": 1 } }
+  ] }
+```
 
 **Panel acoplado (opcional):** añade un bloque a tu layout, justo después de la barra lateral, para tenerlo siempre visible:
 
