@@ -14,6 +14,7 @@ Un mod de [herdr](https://herdr.dev): un popup con todas las sesiones de Claude 
 </div>
 
 - **Agrupadas por carpeta** bajo títulos pequeños y atenuados, la más reciente primero, con el título y hace cuánto. La rama de git y el último prompt están en el tooltip. Los worktrees de git llevan etiqueta.
+- **Plegar, añadir y organizar desde la cabecera**: cada carpeta tiene un chevron; al pasar el cursor por su cabecera aparecen un **+** (sesión nueva de Claude en esa carpeta) y un icono de ordenar (grupos por reciente o por nombre, o sin agrupar para una lista plana por fecha). Tu elección se recuerda.
 - **Búsqueda** por título, último prompt, carpeta y rama.
 - **Un clic la reanuda** (`claude --resume`) en una pestaña nueva, en la carpeta correcta.
 - **Accesos a claude.ai** Projects y Chats, que viven en la nube y no se pueden leer en local.

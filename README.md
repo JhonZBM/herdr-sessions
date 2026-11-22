@@ -14,6 +14,7 @@ A [herdr](https://herdr.dev) mod: a popup with every Claude Code session you hav
 </div>
 
 - **Grouped by folder** under small muted headings, newest first, with the title and how long ago. The git branch and last prompt are in the tooltip. Git worktrees are tagged.
+- **Fold, add and organize from the heading**: each folder has a chevron; hover its heading to get a **+** (new Claude session in that folder) and a sort icon (sort groups by recent or name, or turn grouping off for a flat list by date). Your choice is remembered.
 - **Search** across titles, last prompts, folders and branches.
 - **One click resumes** the session (`claude --resume`) in a new tab, in the right folder.
 - **Shortcuts to claude.ai** Projects and Chats, which live in the cloud and cannot be read locally.
