@@ -12,4 +12,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - SVG chevrons next to the folder names.
 - `sessions-button`: a small "Sessions" button for the top bar that opens the popup, so the entry point is visible.
 - Resume a session in a new tab with one click.
-- Shortcuts to claude.ai Projects and Chats.
+- Running sessions (detected from `~/.claude/sessions`) are marked with a dot; clicking one focuses its tab instead of running `claude --resume` a second time.
+- A "claude.ai" section: your own pinned links (from the clipboard, `claude.ai` links only) plus Projects and Chats shortcuts.
+- "Open links in" setting: default browser, Brave private, Chrome incognito, Edge InPrivate or Firefox private.

@@ -17,7 +17,8 @@ A [herdr](https://herdr.dev) mod: a popup with every Claude Code session you hav
 - **Fold, add and organize from the heading**: each folder has a chevron; hover its heading to get a **+** (new Claude session in that folder) and a sort icon (sort groups by recent or name, or turn grouping off for a flat list by date). Your choice is remembered.
 - **Search** across titles, last prompts, folders and branches.
 - **One click resumes** the session (`claude --resume`) in a new tab, in the right folder.
-- **Shortcuts to claude.ai** Projects and Chats, which live in the cloud and cannot be read locally.
+- **Running sessions are marked** with a dot. Clicking one jumps to its tab instead of opening a second copy.
+- **claude.ai links**: pin your own Projects and Chats (copy the link, press **+** on the "claude.ai" heading), plus Projects and Chats shortcuts. They open in the browser and mode you choose: default, Brave private, Chrome incognito, Edge InPrivate or Firefox private.
 - **A visible button** in the top bar, plus `Ctrl+Shift+S`, so you never have to remember a key.
 - **Popup or docked**: a popup by default (`Ctrl+Shift+S`), so it fits any layout; it can also be docked as a side panel.
 - **Follows your theme**: it only uses the active layout's colors.
@@ -63,7 +64,9 @@ Claude Code stores each conversation as a transcript in `~/.claude/projects/<fol
 
 ## Limits
 
-- Only sessions stored on this computer appear. Cloud sessions and claude.ai Projects are not on disk, so they are opened in the browser instead.
+- Only sessions stored on this computer appear. Cloud sessions and claude.ai Projects and Chats are not on disk and there is no API to read them, so the panel only opens their links; you still need to be signed in to claude.ai in that browser. To work on a project inside herdr, make a local folder with its `CLAUDE.md` and files: its sessions then show up here by themselves.
+- A private browser window shares its login only while a private window stays open; otherwise it asks you to sign in again.
+- Jumping to a running session matches its terminal by the session name shown in the tab title. Two Claude sessions with the same name, or one running outside herdr, cannot be matched and show "running outside herdr".
 - Sessions without an AI-generated title show their first prompt.
 - Only Claude Code is supported for now.
 

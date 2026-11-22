@@ -17,7 +17,8 @@ Un mod de [herdr](https://herdr.dev): un popup con todas las sesiones de Claude 
 - **Plegar, añadir y organizar desde la cabecera**: cada carpeta tiene un chevron; al pasar el cursor por su cabecera aparecen un **+** (sesión nueva de Claude en esa carpeta) y un icono de ordenar (grupos por reciente o por nombre, o sin agrupar para una lista plana por fecha). Tu elección se recuerda.
 - **Búsqueda** por título, último prompt, carpeta y rama.
 - **Un clic la reanuda** (`claude --resume`) en una pestaña nueva, en la carpeta correcta.
-- **Accesos a claude.ai** Projects y Chats, que viven en la nube y no se pueden leer en local.
+- **Las sesiones en marcha se marcan** con un punto. Al pulsar una, salta a su pestaña en vez de abrir una segunda copia.
+- **Enlaces de claude.ai**: fija tus propios Projects y Chats (copia el enlace y pulsa **+** en la cabecera "claude.ai"), además de los accesos a Projects y Chats. Se abren en el navegador y modo que elijas: predeterminado, Brave privado, Chrome incógnito, Edge InPrivate o Firefox privado.
 - **Un botón visible** en la barra superior, además de `Ctrl+Shift+S`, para no tener que recordar una tecla.
 - **Popup o acoplado**: popup por defecto (`Ctrl+Shift+S`), así encaja en cualquier layout; también puede acoplarse como panel lateral.
 - **Sigue tu tema**: solo usa los colores del layout activo.
@@ -63,7 +64,9 @@ Claude Code guarda cada conversación como una transcripción en `~/.claude/proj
 
 ## Límites
 
-- Solo aparecen las sesiones guardadas en este equipo. Las sesiones en la nube y los Projects de claude.ai no están en disco, así que se abren en el navegador.
+- Solo aparecen las sesiones guardadas en este equipo. Las sesiones en la nube y los Projects y Chats de claude.ai no están en disco y no hay API para leerlos, así que el panel solo abre sus enlaces; sigues necesitando haber iniciado sesión en claude.ai en ese navegador. Para trabajar un proyecto dentro de herdr, crea una carpeta local con su `CLAUDE.md` y sus archivos: sus sesiones aparecerán aquí solas.
+- Una ventana privada del navegador comparte su sesión solo mientras haya una ventana privada abierta; si no, pedirá iniciar sesión otra vez.
+- Saltar a una sesión en marcha busca su terminal por el nombre de la sesión que aparece en el título de la pestaña. Dos sesiones de Claude con el mismo nombre, o una que corra fuera de herdr, no se pueden emparejar y muestran "running outside herdr".
 - Las sesiones sin título generado por la IA muestran su primer prompt.
 - Por ahora solo es compatible con Claude Code.
 
