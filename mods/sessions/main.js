@@ -49,7 +49,7 @@ export default class Sessions extends View {
     this.hint = ""; // inline hint of the claude.ai section
     this.linkHov = "";
     this.hov = ""; // cwd of the hovered group heading
-    this.menu = false; // sort/group dropdown open
+    this.menu = false; // open dropdown: false | "sort" | "browser" (one at a time)
     this.handle = cx.focus_handle(); // lets Esc reach the root while the search has focus
     this.sortBy = pref("sort", "recent"); // recent | name
     this.grouped = pref("group", "on") !== "off"; // off: one flat list by date
@@ -206,17 +206,36 @@ export default class Sessions extends View {
       .child(div().flex_1())
       .when(!hot, (el) => el.child(div().flex_none().text_size(10).text_color(t.dim).child(String(g.items.length))))
       .when(hot, (el) => el
-        .child(this.tool(`sort-${g.cwd}`, "sort", "Sort and group", t, (cx) => { this.menu = !this.menu; cx.notify(); }))
+        .child(this.tool(`sort-${g.cwd}`, "sort", "Sort and group", t, (cx) => { this.toggleMenu("sort", cx); }))
         .child(this.tool(`new-${g.cwd}`, "plus", `New session in ${g.project}`, t, () => this.newSession(g))));
   }
 
   // Dropdown under the header: sort groups by Recent | Name, group by folder on | off.
+  toggleMenu(kind, cx) {
+    this.menu = this.menu === kind ? false : kind; // opening one closes the other
+    cx.notify();
+  }
+
+  // Dropdown for the claude.ai chip, opening upward from the section: pick the browser/mode for links.
+  browserMenu(t, opt) {
+    return v_flex().id("sessions-browser-menu").absolute().bottom(this.linksHeight()).right(14).w(190).p(4).rounded(8).bg(t.popover)
+      .border_1().border_color(t.border).shadow_md()
+      .child(div().px(8).pt(6).pb(2).text_size(10).font_semibold().text_color(t.dim).child("Open links in"))
+      .children(BROWSERS.map(([id, label]) => opt(`m-b-${id}`, label, this.browser === id, () => { this.browser = id; setPref("browser", id); })));
+  }
+
+  // Height of the claude.ai section, to anchor its dropdown right above it.
+  linksHeight() {
+    return 4 + 24 + Math.min(112, 24 * (this.links.length + DEFAULT_LINKS.length)) + 6 + 1;
+  }
+
   menuView(t) {
     const opt = (id, label, on, fn) => h_flex().id(id).items_center().gap(8).h(26).px(8).rounded(5).cursor_pointer()
       .hover((x) => x.bg(t.hover))
       .on_click((_e, cx) => { fn(); this.menu = false; cx.notify(); })
       .child(div().w(12).flex_none().when(on, (el) => el.child(svg(ICON("check")).size(12).text_color(t.accent))))
       .child(div().text_size(12).text_color(t.foreground).child(label));
+    if (this.menu === "browser") return this.browserMenu(t, opt);
     const title = (x) => div().px(8).pt(6).pb(2).text_size(10).font_semibold().text_color(t.dim).child(x);
     return v_flex().id("sessions-menu").absolute().top(78).right(14).w(190).p(4).rounded(8).bg(t.popover)
       .border_1().border_color(t.border).shadow_md()
@@ -225,9 +244,11 @@ export default class Sessions extends View {
       .child(opt("m-name", "Name", this.sortBy === "name", () => { this.sortBy = "name"; setPref("sort", "name"); }))
       .child(title("Group by folder"))
       .child(opt("m-on", "On", this.grouped, () => { this.grouped = true; setPref("group", "on"); }))
-      .child(opt("m-off", "Off (flat list by date)", !this.grouped, () => { this.grouped = false; setPref("group", "off"); }))
-      .child(title("Open links in"))
-      .children(BROWSERS.map(([id, label]) => opt(`m-b-${id}`, label, this.browser === id, () => { this.browser = id; setPref("browser", id); })));
+      .child(opt("m-off", "Off (flat list by date)", !this.grouped, () => { this.grouped = false; setPref("group", "off"); }));
+  }
+
+  browserLabel() {
+    return this.browser === "default" ? "Default" : (BROWSERS.find((b) => b[0] === this.browser)?.[1] ?? "Default");
   }
 
   // One claude.ai row: name and a small arrow; pinned ones show an "x" on hover.
@@ -240,7 +261,8 @@ export default class Sessions extends View {
         else if (!on && this.linkHov === url) { this.linkHov = ""; cx.notify(); }
       })
       .on_click((_e, cx) => this.openLink(url, cx))
-      .tooltip(url)
+      .tooltip(`Open in ${this.browser === "default" ? "default browser" : this.browserLabel()}
+${url}`)
       .child(div().min_w(0).truncate().text_size(12).text_color(t.foreground).child(name))
       .child(svg(ICON("external")).size(10).flex_none().text_color(t.dim))
       .child(div().flex_1())
@@ -258,7 +280,13 @@ export default class Sessions extends View {
         })
         .child(div().text_size(11).font_semibold().text_color(t.muted).child("claude.ai"))
         .child(div().flex_1())
-        .when(this.hint, (el) => el.child(div().text_size(10.5).text_color(t.dim).child(this.hint)))
+        .when(this.hint, (el) => el.child(div().min_w(0).truncate().text_size(10.5).text_color(t.dim).child(this.hint)))
+        .child(h_flex().id("browser-chip").h(20).px(6).gap(3).flex_none().items_center().rounded(5).cursor_pointer()
+          .text_size(10.5).text_color(t.muted).bg(t.raised)
+          .hover((x) => x.bg(t.hover).text_color(t.foreground))
+          .on_click((_e, cx) => this.toggleMenu("browser", cx)).tooltip("Open links in…")
+          .child(this.browserLabel())
+          .child(svg(ICON("chevron-down")).size(10).flex_none()))
         .when(hot, (el) => el.child(this.tool("pin-link", "plus", "Pin the link in your clipboard", t, (cx) => this.pinLink(cx)))))
       .child(v_flex().max_h(112).overflow_y_scrollbar()
         .children([...this.links.map((l) => this.linkRow(l.name, l.url, t, true)), ...DEFAULT_LINKS.map(([n, u]) => this.linkRow(n, u, t, false))]));
@@ -283,9 +311,9 @@ export default class Sessions extends View {
       .child(h_flex().items_center().gap(6).px(14).pt(12).pb(8)
         .child(div().flex_1().text_size(12.5).font_semibold().text_color(t.foreground).child("Sessions"))
         .child(div().id("sessions-sort").p(4).rounded(5).cursor_pointer()
-          .when(this.menu, (x) => x.bg(t.raised)) // pressed look while the menu is open
+          .when(this.menu === "sort", (x) => x.bg(t.raised)) // pressed look while the menu is open
           .hover((x) => x.bg(t.hover))
-          .on_click((_e, cx) => { this.menu = !this.menu; cx.notify(); }).tooltip("Sort and group")
+          .on_click((_e, cx) => this.toggleMenu("sort", cx)).tooltip("Sort and group")
           .child(svg(ICON("sort")).size(12).text_color(t.dim)))
         .child(div().id("sessions-refresh").p(4).rounded(5).cursor_pointer()
           .hover((x) => x.bg(t.hover))
