@@ -1,0 +1,55 @@
+<div align="center">
+
+<h1>herdr-sessions</h1>
+
+[English](README.md)
+
+[![License: MIT](https://img.shields.io/github/license/JhonZBM/herdr-sessions?style=flat-square)](LICENSE)
+[![Node](https://img.shields.io/badge/node-required-5FA04E?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
+
+Un mod de [herdr](https://herdr.dev): un panel lateral compacto con todas las sesiones de Claude Code que has abierto, agrupadas por carpeta. Buscas, haces clic y la sesión se reanuda en una pestaña nueva.
+
+![herdr-sessions](preview.png)
+
+</div>
+
+- **Agrupadas por carpeta**, la más reciente primero, con el título, hace cuánto y la rama de git de cada sesión. Los worktrees de git llevan etiqueta.
+- **Búsqueda** por título, último prompt, carpeta y rama.
+- **Un clic la reanuda** (`claude --resume`) en una pestaña nueva, en la carpeta correcta.
+- **Accesos a claude.ai** Projects y Chats, que viven en la nube y no se pueden leer en local.
+- **Sigue tu tema**: solo usa los colores del layout activo.
+- **Ligero por diseño**: un script de Node, sin dependencias, sin temporizadores y sin proceso en segundo plano. Lee al abrirse y al pulsar refrescar.
+
+## Instalación
+
+Requisitos: herdr-app (ábrela una vez), Node y Claude Code. Hecho y probado en Windows 11; macOS y Linux deberían funcionar pero no están probados.
+
+**Lo más fácil:** pide a un agente de herdr que añada este repo como mod:
+
+> Add the herdr-sessions mod from https://github.com/JhonZBM/herdr-sessions. Read RECIPE.md and every file before installing.
+
+**A mano:** copia `mods/sessions/` en `~/.config/herdr-app/mods/` y compruébalo:
+
+```sh
+herdr-app check ~/.config/herdr-app/mods/sessions
+```
+
+El panel aparece a la izquierda del layout activo la primera vez que carga.
+
+## Cómo funciona
+
+Claude Code guarda cada conversación como una transcripción en `~/.claude/projects/<carpeta>/<id-de-sesión>.jsonl`. `index.js` lee solo los primeros 48 KB y los últimos 96 KB de cada archivo para sacar el título, el último prompt, la carpeta de trabajo y la rama, e imprime JSON. Nunca escribe, no envía nada por la red e ignora las transcripciones de subagentes.
+
+## Límites
+
+- Solo aparecen las sesiones guardadas en este equipo. Las sesiones en la nube y los Projects de claude.ai no están en disco, así que se abren en el navegador.
+- Las sesiones sin título generado por la IA muestran su primer prompt.
+- Por ahora solo es compatible con Claude Code.
+
+## Contribuir
+
+El código, los comentarios y los textos de la interfaz están en inglés. Los commits siguen [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`). Todo cambio debe pasar `herdr-app check` y quedar anotado en [CHANGELOG.md](CHANGELOG.md).
+
+## Licencia
+
+[MIT](LICENSE)
