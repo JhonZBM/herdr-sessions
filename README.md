@@ -7,16 +7,17 @@
 [![License: MIT](https://img.shields.io/github/license/JhonZBM/herdr-sessions?style=flat-square)](LICENSE)
 [![Node](https://img.shields.io/badge/node-required-5FA04E?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 
-A [herdr](https://herdr.dev) mod: a compact side panel with every Claude Code session you have run, grouped by folder. Search, click, and the session resumes in a new tab.
+A [herdr](https://herdr.dev) mod: a popup with every Claude Code session you have run, grouped by folder. Press a key, search, click, and the session resumes in a new tab. It takes no screen space until you open it.
 
 ![herdr-sessions](preview.png)
 
 </div>
 
-- **Grouped by folder**, newest first, with the title, how long ago and the git branch of each session. Git worktrees are tagged.
+- **Grouped by folder** under small muted headings, newest first, with the title and how long ago. The git branch and last prompt are in the tooltip. Git worktrees are tagged.
 - **Search** across titles, last prompts, folders and branches.
 - **One click resumes** the session (`claude --resume`) in a new tab, in the right folder.
 - **Shortcuts to claude.ai** Projects and Chats, which live in the cloud and cannot be read locally.
+- **Popup or docked**: a popup by default (`Ctrl+Shift+S`), so it fits any layout; it can also be docked as a side panel.
 - **Follows your theme**: it only uses the active layout's colors.
 - **Light by design**: one Node script, no dependencies, no timers and no background process. It reads on open and when you press refresh.
 
@@ -34,7 +35,15 @@ Requirements: herdr-app (open it once), Node and Claude Code. Built and tested o
 herdr-app check ~/.config/herdr-app/mods/sessions
 ```
 
-The panel appears on the left of the active layout the first time it loads.
+Merge `mods/sessions/keys.json` into your `keys.json` (it binds `Ctrl+Shift+S`), or run `herdr-app do mod.open '{"name":"sessions"}'`.
+
+**Docked panel (optional):** add a block to your layout, right after the sidebar, to keep it always visible:
+
+```json
+{ "id": "sessions", "type": "block", "content": { "mod": "sessions" }, "size": { "px": 300 }, "hidden": true }
+```
+
+Then `layout.toggle:sessions` shows or hides it.
 
 ## How it works
 

@@ -7,16 +7,17 @@
 [![License: MIT](https://img.shields.io/github/license/JhonZBM/herdr-sessions?style=flat-square)](LICENSE)
 [![Node](https://img.shields.io/badge/node-required-5FA04E?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 
-Un mod de [herdr](https://herdr.dev): un panel lateral compacto con todas las sesiones de Claude Code que has abierto, agrupadas por carpeta. Buscas, haces clic y la sesión se reanuda en una pestaña nueva.
+Un mod de [herdr](https://herdr.dev): un popup con todas las sesiones de Claude Code que has abierto, agrupadas por carpeta. Pulsas una tecla, buscas, haces clic y la sesión se reanuda en una pestaña nueva. No ocupa pantalla hasta que lo abres.
 
 ![herdr-sessions](preview.png)
 
 </div>
 
-- **Agrupadas por carpeta**, la más reciente primero, con el título, hace cuánto y la rama de git de cada sesión. Los worktrees de git llevan etiqueta.
+- **Agrupadas por carpeta** bajo títulos pequeños y atenuados, la más reciente primero, con el título y hace cuánto. La rama de git y el último prompt están en el tooltip. Los worktrees de git llevan etiqueta.
 - **Búsqueda** por título, último prompt, carpeta y rama.
 - **Un clic la reanuda** (`claude --resume`) en una pestaña nueva, en la carpeta correcta.
 - **Accesos a claude.ai** Projects y Chats, que viven en la nube y no se pueden leer en local.
+- **Popup o acoplado**: popup por defecto (`Ctrl+Shift+S`), así encaja en cualquier layout; también puede acoplarse como panel lateral.
 - **Sigue tu tema**: solo usa los colores del layout activo.
 - **Ligero por diseño**: un script de Node, sin dependencias, sin temporizadores y sin proceso en segundo plano. Lee al abrirse y al pulsar refrescar.
 
@@ -34,7 +35,15 @@ Requisitos: herdr-app (ábrela una vez), Node y Claude Code. Hecho y probado en 
 herdr-app check ~/.config/herdr-app/mods/sessions
 ```
 
-El panel aparece a la izquierda del layout activo la primera vez que carga.
+Fusiona `mods/sessions/keys.json` en tu `keys.json` (asigna `Ctrl+Shift+S`), o ejecuta `herdr-app do mod.open '{"name":"sessions"}'`.
+
+**Panel acoplado (opcional):** añade un bloque a tu layout, justo después de la barra lateral, para tenerlo siempre visible:
+
+```json
+{ "id": "sessions", "type": "block", "content": { "mod": "sessions" }, "size": { "px": 300 }, "hidden": true }
+```
+
+Después `layout.toggle:sessions` lo muestra u oculta.
 
 ## Cómo funciona
 
