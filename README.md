@@ -72,7 +72,7 @@ Claude Code stores each conversation as a transcript in `~/.claude/projects/<fol
 
 ## Contributing
 
-Code, comments and UI strings are in English. Commits follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`). Every change must pass `herdr-app check` and be recorded in [CHANGELOG.md](CHANGELOG.md).
+Code, comments and UI strings are in English. Commits follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`). Every change must pass `herdr-app check` and be recorded in [CHANGELOG.md](CHANGELOG.md). See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

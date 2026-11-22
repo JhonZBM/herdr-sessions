@@ -72,7 +72,7 @@ Claude Code guarda cada conversación como una transcripción en `~/.claude/proj
 
 ## Contribuir
 
-El código, los comentarios y los textos de la interfaz están en inglés. Los commits siguen [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`). Todo cambio debe pasar `herdr-app check` y quedar anotado en [CHANGELOG.md](CHANGELOG.md).
+El código, los comentarios y los textos de la interfaz están en inglés. Los commits siguen [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`). Todo cambio debe pasar `herdr-app check` y quedar anotado en [CHANGELOG.md](CHANGELOG.md). Ver [CONTRIBUTING.md](CONTRIBUTING.md) (en inglés).
 
 ## Licencia
 
