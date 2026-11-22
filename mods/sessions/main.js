@@ -11,14 +11,44 @@ const pref = (k, d) => { try { return localStorage.getItem(`sessions.${k}`) ?? d
 const setPref = (k, v) => { try { localStorage.setItem(`sessions.${k}`, v); } catch {} };
 const DEFAULT_LINKS = [["Projects", "https://claude.ai/projects"], ["Chats", "https://claude.ai/recents"]];
 const URL_RE = /^https:\/\/claude\.ai\/[\w\-./?=%#]*$/; // the only links that are ever stored or launched
-// Browser choices: [id, label, windows exe, macOS app, linux exe, private-mode flag]
+// Browsers: [id, short label, windows exe, macOS app, linux exe, private flag, new-window flag]
 const BROWSERS = [
-  ["default", "Default browser"],
-  ["brave", "Brave private", "brave", "Brave Browser", "brave-browser", "--incognito"],
-  ["chrome", "Chrome incognito", "chrome", "Google Chrome", "google-chrome", "--incognito"],
-  ["edge", "Edge InPrivate", "msedge", "Microsoft Edge", "microsoft-edge", "--inprivate"],
-  ["firefox", "Firefox private", "firefox", "Firefox", "firefox", "-private-window"],
+  ["default", "Default"],
+  ["brave", "Brave", "brave", "Brave Browser", "brave-browser", "--incognito", "--new-window"],
+  ["chrome", "Chrome", "chrome", "Google Chrome", "google-chrome", "--incognito", "--new-window"],
+  ["edge", "Edge", "msedge", "Microsoft Edge", "microsoft-edge", "--inprivate", "--new-window"],
+  ["firefox", "Firefox", "firefox", "Firefox", "firefox", "-private-window", "-new-window"],
 ];
+const MODES = [["normal", "Normal"], ["window", "New window"], ["private", "Private"]];
+
+// The command to open `url`: [command, args] (argv only, never a shell string) or null.
+// Default browser + Normal is handled by cx.open_url; Default + other modes is not offered (unknown browser).
+function launchArgv(browser, mode, platform, url) {
+  if (!URL_RE.test(url)) return null;
+  const b = BROWSERS.find((x) => x[0] === browser);
+  if (!b || !b[2]) return null;
+  const flags = mode === "private" ? [b[5]] : mode === "window" ? [b[6]] : [];
+  if (platform === "windows") return ["cmd", ["/c", "start", "", b[2], ...flags, url]];
+  if (platform === "macos") return mode === "normal" ? ["open", ["-a", b[3], url]] : ["open", ["-na", b[3], "--args", ...flags, url]];
+  return [b[4], [...flags, url]];
+}
+
+// Saved choice. Older builds stored one combined value ("brave", "chrome", ... meaning the private mode)
+// and no mode: a named browser without a saved mode is migrated to that browser + "private".
+function loadChoice() {
+  let browser = pref("browser", "default");
+  let mode = null;
+  try { mode = localStorage.getItem("sessions.mode"); } catch {}
+  if (/^(brave|chrome|edge|firefox)-/.test(browser)) browser = browser.split("-")[0]; // brave-private, chrome-incognito...
+  if (!BROWSERS.some((b) => b[0] === browser)) browser = "default";
+  if (mode === null) {
+    mode = browser === "default" ? "normal" : "private";
+    setPref("browser", browser);
+    setPref("mode", mode);
+  }
+  if (!MODES.some((m) => m[0] === mode) || browser === "default") mode = "normal";
+  return [browser, mode];
+}
 const loadLinks = () => {
   try {
     const v = JSON.parse(pref("links", "[]"));
@@ -44,7 +74,7 @@ export default class Sessions extends View {
     this.filter = "";
     this.collapsed = {};
     this.links = loadLinks();
-    this.browser = pref("browser", "default");
+    [this.browser, this.mode] = loadChoice();
     this.notice = ""; // id of a live row whose terminal was not found
     this.hint = ""; // inline hint of the claude.ai section
     this.linkHov = "";
@@ -115,13 +145,9 @@ export default class Sessions extends View {
   // Open a claude.ai link in the chosen browser; the URL is re-validated and only argv arrays are used.
   openLink(url, cx) {
     if (!URL_RE.test(url)) return;
-    const b = BROWSERS.find((x) => x[0] === this.browser);
-    if (!b || !b[2]) return cx.open_url(url);
-    const p = window()?.platform;
-    const [, , win, mac, lin, flag] = b;
-    if (p === "windows") exec("cmd", ["/c", "start", "", win, flag, url]).catch(() => {});
-    else if (p === "macos") exec("open", ["-na", mac, "--args", flag, url]).catch(() => {});
-    else exec(lin, [flag, url]).catch(() => {});
+    const argv = launchArgv(this.browser, this.mode, window()?.platform, url);
+    if (!argv) return cx.open_url(url);
+    exec(argv[0], argv[1]).catch(() => {});
     if (this.popup) closeOverlay(props()?.overlay);
   }
 
@@ -218,10 +244,17 @@ export default class Sessions extends View {
 
   // Dropdown for the claude.ai chip, opening upward from the section: pick the browser/mode for links.
   browserMenu(t, opt) {
+    const title = (x) => div().px(8).pt(6).pb(2).text_size(10).font_semibold().text_color(t.dim).child(x);
+    const dflt = this.browser === "default";
     return v_flex().id("sessions-browser-menu").absolute().bottom(this.linksHeight()).right(14).w(190).p(4).rounded(8).bg(t.popover)
       .border_1().border_color(t.border).shadow_md()
-      .child(div().px(8).pt(6).pb(2).text_size(10).font_semibold().text_color(t.dim).child("Open links in"))
-      .children(BROWSERS.map(([id, label]) => opt(`m-b-${id}`, label, this.browser === id, () => { this.browser = id; setPref("browser", id); })));
+      .child(title("Browser"))
+      .children(BROWSERS.map(([id, label]) => opt(`m-b-${id}`, label, this.browser === id, () => {
+        this.browser = id; setPref("browser", id);
+        if (id === "default") { this.mode = "normal"; setPref("mode", "normal"); }
+      }, false, true)))
+      .child(title(dflt ? "Mode (pick a browser)" : "Mode"))
+      .children(MODES.map(([id, label]) => opt(`m-m-${id}`, label, this.mode === id, () => { this.mode = id; setPref("mode", id); }, dflt && id !== "normal")));
   }
 
   // Height of the claude.ai section, to anchor its dropdown right above it.
@@ -230,9 +263,9 @@ export default class Sessions extends View {
   }
 
   menuView(t) {
-    const opt = (id, label, on, fn) => h_flex().id(id).items_center().gap(8).h(26).px(8).rounded(5).cursor_pointer()
-      .hover((x) => x.bg(t.hover))
-      .on_click((_e, cx) => { fn(); this.menu = false; cx.notify(); })
+    const opt = (id, label, on, fn, off = false, keep = false) => h_flex().id(id).items_center().gap(8).h(26).px(8).rounded(5).when(off, (x) => x.opacity(0.4), (x) => x.cursor_pointer())
+      .when(!off, (x) => x.hover((y) => y.bg(t.hover)))
+      .on_click((_e, cx) => { if (off) return; fn(); if (!keep) this.menu = false; cx.notify(); }) // a browser pick keeps the menu open for the mode
       .child(div().w(12).flex_none().when(on, (el) => el.child(svg(ICON("check")).size(12).text_color(t.accent))))
       .child(div().text_size(12).text_color(t.foreground).child(label));
     if (this.menu === "browser") return this.browserMenu(t, opt);
@@ -247,8 +280,11 @@ export default class Sessions extends View {
       .child(opt("m-off", "Off (flat list by date)", !this.grouped, () => { this.grouped = false; setPref("group", "off"); }));
   }
 
+  // Compact "Browser · mode": just the browser when Normal, "Default" alone for the default browser.
   browserLabel() {
-    return this.browser === "default" ? "Default" : (BROWSERS.find((b) => b[0] === this.browser)?.[1] ?? "Default");
+    const name = BROWSERS.find((b) => b[0] === this.browser)?.[1] ?? "Default";
+    const mode = this.mode === "normal" ? "" : ` · ${MODES.find((m) => m[0] === this.mode)?.[1].toLowerCase()}`;
+    return name + mode;
   }
 
   // One claude.ai row: name and a small arrow; pinned ones show an "x" on hover.
@@ -261,8 +297,7 @@ export default class Sessions extends View {
         else if (!on && this.linkHov === url) { this.linkHov = ""; cx.notify(); }
       })
       .on_click((_e, cx) => this.openLink(url, cx))
-      .tooltip(`Open in ${this.browser === "default" ? "default browser" : this.browserLabel()}
-${url}`)
+      .tooltip("Open in " + (this.browser === "default" ? "default browser" : this.browserLabel()) + String.fromCharCode(10) + url)
       .child(div().min_w(0).truncate().text_size(12).text_color(t.foreground).child(name))
       .child(svg(ICON("external")).size(10).flex_none().text_color(t.dim))
       .child(div().flex_1())
