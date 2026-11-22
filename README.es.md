@@ -18,7 +18,7 @@ Un mod de [herdr](https://herdr.dev): un popup con todas las sesiones de Claude 
 - **Búsqueda** por título, último prompt, carpeta y rama.
 - **Un clic la reanuda** (`claude --resume`) en una pestaña nueva, en la carpeta correcta.
 - **Las sesiones en marcha se marcan** con un punto. Al pulsar una, salta a su pestaña en vez de abrir una segunda copia.
-- **Enlaces de claude.ai**: fija tus propios Projects y Chats (copia el enlace y pulsa **+** en la cabecera "claude.ai"), además de los accesos a Projects y Chats. Se abren en el navegador y modo que elijas: predeterminado, Brave privado, Chrome incógnito, Edge InPrivate o Firefox privado.
+- **Enlaces de claude.ai**: fija tus propios Projects y Chats (copia el enlace y pulsa **+** en la cabecera "claude.ai"), además de los accesos a Projects y Chats. Se abren en el navegador y modo que elijas con el botón de esa cabecera, que siempre muestra la opción actual: predeterminado, Brave privado, Chrome incógnito, Edge InPrivate o Firefox privado. La elección se recuerda y empieza en "Default", así que elige la tuya una vez.
 - **Un botón visible** en la barra superior, además de `Ctrl+Shift+S`, para no tener que recordar una tecla.
 - **Popup o acoplado**: popup por defecto (`Ctrl+Shift+S`), así encaja en cualquier layout; también puede acoplarse como panel lateral.
 - **Sigue tu tema**: solo usa los colores del layout activo.

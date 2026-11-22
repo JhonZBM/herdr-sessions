@@ -14,4 +14,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Resume a session in a new tab with one click.
 - Running sessions (detected from `~/.claude/sessions`) are marked with a dot; clicking one focuses its tab instead of running `claude --resume` a second time.
 - A "claude.ai" section: your own pinned links (from the clipboard, `claude.ai` links only) plus Projects and Chats shortcuts.
-- "Open links in" setting: default browser, Brave private, Chrome incognito, Edge InPrivate or Firefox private.
+- "Open links in" chip on the claude.ai heading, always showing the current choice (default browser, Brave private, Chrome incognito, Edge InPrivate or Firefox private) and opening a small dropdown to change it. Each link's tooltip says where it will open.

@@ -18,7 +18,7 @@ A [herdr](https://herdr.dev) mod: a popup with every Claude Code session you hav
 - **Search** across titles, last prompts, folders and branches.
 - **One click resumes** the session (`claude --resume`) in a new tab, in the right folder.
 - **Running sessions are marked** with a dot. Clicking one jumps to its tab instead of opening a second copy.
-- **claude.ai links**: pin your own Projects and Chats (copy the link, press **+** on the "claude.ai" heading), plus Projects and Chats shortcuts. They open in the browser and mode you choose: default, Brave private, Chrome incognito, Edge InPrivate or Firefox private.
+- **claude.ai links**: pin your own Projects and Chats (copy the link, press **+** on the "claude.ai" heading), plus Projects and Chats shortcuts. They open in the browser and mode you choose with the chip on that heading, which always shows the current choice: default, Brave private, Chrome incognito, Edge InPrivate or Firefox private. The setting is remembered and starts as "Default", so pick yours once.
 - **A visible button** in the top bar, plus `Ctrl+Shift+S`, so you never have to remember a key.
 - **Popup or docked**: a popup by default (`Ctrl+Shift+S`), so it fits any layout; it can also be docked as a side panel.
 - **Follows your theme**: it only uses the active layout's colors.
