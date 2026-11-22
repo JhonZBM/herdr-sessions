@@ -3,13 +3,28 @@
 // Reads ~/.claude/projects only on open and on refresh (no timers).
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex, InputState, Input } from "gpui-base";
-import { exec, home, run, theme, props, closeOverlay } from "herdr";
+import { agents, panes, exec, home, run, theme, props, closeOverlay, window } from "herdr";
 
 const SCRIPT = () => `${home()}/.config/herdr-app/mods/sessions/index.js`;
 const ICON = (name) => `mods/sessions/${name}.svg`;
 const pref = (k, d) => { try { return localStorage.getItem(`sessions.${k}`) ?? d; } catch { return d; } };
 const setPref = (k, v) => { try { localStorage.setItem(`sessions.${k}`, v); } catch {} };
-const LINKS = [["Projects", "https://claude.ai/projects"], ["Chats", "https://claude.ai/recents"]];
+const DEFAULT_LINKS = [["Projects", "https://claude.ai/projects"], ["Chats", "https://claude.ai/recents"]];
+const URL_RE = /^https:\/\/claude\.ai\/[\w\-./?=%#]*$/; // the only links that are ever stored or launched
+// Browser choices: [id, label, windows exe, macOS app, linux exe, private-mode flag]
+const BROWSERS = [
+  ["default", "Default browser"],
+  ["brave", "Brave private", "brave", "Brave Browser", "brave-browser", "--incognito"],
+  ["chrome", "Chrome incognito", "chrome", "Google Chrome", "google-chrome", "--incognito"],
+  ["edge", "Edge InPrivate", "msedge", "Microsoft Edge", "microsoft-edge", "--inprivate"],
+  ["firefox", "Firefox private", "firefox", "Firefox", "firefox", "-private-window"],
+];
+const loadLinks = () => {
+  try {
+    const v = JSON.parse(pref("links", "[]"));
+    return Array.isArray(v) ? v.filter((l) => l && typeof l.name === "string" && URL_RE.test(String(l.url))) : [];
+  } catch { return []; }
+};
 
 function ago(ms) {
   const m = Math.max(0, Date.now() - ms) / 60000;
@@ -28,6 +43,11 @@ export default class Sessions extends View {
     this.error = "";
     this.filter = "";
     this.collapsed = {};
+    this.links = loadLinks();
+    this.browser = pref("browser", "default");
+    this.notice = ""; // id of a live row whose terminal was not found
+    this.hint = ""; // inline hint of the claude.ai section
+    this.linkHov = "";
     this.hov = ""; // cwd of the hovered group heading
     this.menu = false; // sort/group dropdown open
     this.handle = cx.focus_handle(); // lets Esc reach the root while the search has focus
@@ -36,6 +56,8 @@ export default class Sessions extends View {
     this.input = InputState.new({ placeholder: "Search sessions…" });
     this.input.on("change", (_e, cx) => {
       this.filter = this.input.value().trim().toLowerCase();
+      this.notice = "";
+      this.hint = "";
       cx.notify();
     });
     this.load(cx);
@@ -58,9 +80,69 @@ export default class Sessions extends View {
     });
   }
 
-  resume(s) {
+  // The herdr terminal running a live session: the agent title carries the session name (strong
+  // signal); else the only Claude pane whose folder matches (weak signal, must be unambiguous).
+  findLive(s) {
+    const norm = (p) => String(p ?? "").replace(/\\/g, "/").replace(/\/+$/, "").toLowerCase();
+    const isClaude = (x) => /claude/i.test(`${x.app ?? ""} ${x.program?.key ?? ""}`);
+    const name = (s.name ?? "").toLowerCase();
+    if (name) {
+      const a = agents().find((x) => isClaude(x) && String(x.title ?? "").toLowerCase().includes(name));
+      if (a) return a.pane;
+    }
+    const m = panes().filter((p) => p.terminal && isClaude(p) && norm(p.cwd) === norm(s.cwd));
+    return m.length === 1 ? m[0].pane : null;
+  }
+
+  resume(s, cx) {
+    this.notice = "";
+    if (s.live) {
+      // Never `claude --resume` a running session: jump to its terminal (pane.focus, like the agents list).
+      const pane = this.findLive(s);
+      if (pane) {
+        run("pane.focus", { pane });
+        if (this.popup) closeOverlay(props()?.overlay);
+      } else {
+        this.notice = s.id;
+        cx?.notify();
+      }
+      return;
+    }
     run("tab.new", { name: s.title.slice(0, 40), folder: s.cwd, argv: ["claude", "--resume", s.id] });
     if (this.popup) closeOverlay(props()?.overlay); // get out of the way once a session opens
+  }
+
+  // Open a claude.ai link in the chosen browser; the URL is re-validated and only argv arrays are used.
+  openLink(url, cx) {
+    if (!URL_RE.test(url)) return;
+    const b = BROWSERS.find((x) => x[0] === this.browser);
+    if (!b || !b[2]) return cx.open_url(url);
+    const p = window()?.platform;
+    const [, , win, mac, lin, flag] = b;
+    if (p === "windows") exec("cmd", ["/c", "start", "", win, flag, url]).catch(() => {});
+    else if (p === "macos") exec("open", ["-na", mac, "--args", flag, url]).catch(() => {});
+    else exec(lin, [flag, url]).catch(() => {});
+    if (this.popup) closeOverlay(props()?.overlay);
+  }
+
+  // Pin the claude.ai link in the clipboard; name = typed text, else the last path segment.
+  pinLink(cx) {
+    const url = (cx.read_from_clipboard() ?? "").trim();
+    if (!URL_RE.test(url)) { this.hint = "Copy a claude.ai link first"; return cx.notify(); }
+    if (this.links.some((l) => l.url === url)) { this.hint = "Already pinned"; return cx.notify(); }
+    const typed = this.input.value().trim().slice(0, 40);
+    const seg = decodeURIComponent(url.split(/[?#]/)[0].split("/").filter(Boolean).pop() ?? "claude.ai");
+    this.links = [...this.links, { name: typed || seg.slice(0, 40), url }];
+    setPref("links", JSON.stringify(this.links));
+    this.hint = "";
+    if (typed) { this.input.set_value?.(""); this.filter = ""; }
+    cx.notify();
+  }
+
+  unpin(url, cx) {
+    this.links = this.links.filter((l) => l.url !== url);
+    setPref("links", JSON.stringify(this.links));
+    cx.notify();
   }
 
   groups() {
@@ -76,16 +158,19 @@ export default class Sessions extends View {
     return out;
   }
 
-  // One line per session, 28px pitch: title left, age right in `dim`. The branch lives in the tooltip.
+  // One line per session, 28px pitch: title left, age right in `dim`. A live session (running in a
+  // Claude Code process) gets an accent dot and jumps to its terminal instead of resuming.
   row(s, t) {
     const branch = s.branch && s.branch !== "HEAD" ? `${s.branch}\n` : "";
-    return div().id(`s-${s.id}`).h_flex().items_center().gap(10).h(28).px(10).rounded(6).cursor_pointer()
+    const tip = `${s.live ? "Open in herdr\n" : ""}${branch}${(s.last || s.title).slice(0, 110)}`;
+    return div().id(`s-${s.id}`).h_flex().items_center().gap(8).h(28).px(10).rounded(6).cursor_pointer()
       .hover((x) => x.bg(t.hover))
       .active((x) => x.bg(t.selected))
-      .on_click(() => this.resume(s))
-      .tooltip(`${branch}${(s.last || s.title).slice(0, 110)}`)
+      .on_click((_e, cx) => this.resume(s, cx))
+      .tooltip(tip)
+      .when(s.live, (el) => el.child(div().size(6).flex_none().rounded(3).bg(t.accent)))
       .child(div().flex_1().min_w(0).truncate().text_size(12.5).text_color(t.foreground).child(s.title))
-      .child(div().flex_none().text_size(10.5).text_color(t.dim).child(ago(s.mtime)));
+      .child(div().flex_none().text_size(10.5).text_color(t.dim).child(this.notice === s.id ? "running outside herdr" : ago(s.mtime)));
   }
 
   newSession(g) {
@@ -140,16 +225,43 @@ export default class Sessions extends View {
       .child(opt("m-name", "Name", this.sortBy === "name", () => { this.sortBy = "name"; setPref("sort", "name"); }))
       .child(title("Group by folder"))
       .child(opt("m-on", "On", this.grouped, () => { this.grouped = true; setPref("group", "on"); }))
-      .child(opt("m-off", "Off (flat list by date)", !this.grouped, () => { this.grouped = false; setPref("group", "off"); }));
+      .child(opt("m-off", "Off (flat list by date)", !this.grouped, () => { this.grouped = false; setPref("group", "off"); }))
+      .child(title("Open links in"))
+      .children(BROWSERS.map(([id, label]) => opt(`m-b-${id}`, label, this.browser === id, () => { this.browser = id; setPref("browser", id); })));
   }
 
-  link([label, url], t) {
-    return h_flex().id(`l-${label}`).flex_1().h(24).gap(4).rounded(5).items_center().justify_center()
-      .text_size(11).text_color(t.muted).bg(t.raised).cursor_pointer()
-      .hover((x) => x.text_color(t.foreground).bg(t.hover))
-      .on_click((_e, cx) => cx.open_url(url))
-      .child(label)
-      .child(svg(ICON("external")).size(10).flex_none());
+  // One claude.ai row: name and a small arrow; pinned ones show an "x" on hover.
+  linkRow(name, url, t, pinned) {
+    const hot = this.linkHov === url;
+    return h_flex().id(`l-${url}`).h(24).px(10).gap(6).items_center().rounded(6).cursor_pointer()
+      .hover((x) => x.bg(t.hover))
+      .on_hover((on, cx) => {
+        if (on && this.linkHov !== url) { this.linkHov = url; cx.notify(); }
+        else if (!on && this.linkHov === url) { this.linkHov = ""; cx.notify(); }
+      })
+      .on_click((_e, cx) => this.openLink(url, cx))
+      .tooltip(url)
+      .child(div().min_w(0).truncate().text_size(12).text_color(t.foreground).child(name))
+      .child(svg(ICON("external")).size(10).flex_none().text_color(t.dim))
+      .child(div().flex_1())
+      .when(pinned && hot, (el) => el.child(this.tool(`unpin-${url}`, "close", "Remove", t, (cx) => this.unpin(url, cx))));
+  }
+
+  // "claude.ai" section: pinned links, then the two defaults. Fixed under the list, capped in height.
+  linksView(t) {
+    const hot = this.linkHov === "head";
+    return v_flex().flex_none().border_t(1).border_color(t.border).px(6).pb(6)
+      .child(h_flex().id("links-head").gap(4).items_center().h(24).px(10).mt(4)
+        .on_hover((on, cx) => {
+          if (on && this.linkHov !== "head") { this.linkHov = "head"; cx.notify(); }
+          else if (!on && this.linkHov === "head") { this.linkHov = ""; cx.notify(); }
+        })
+        .child(div().text_size(11).font_semibold().text_color(t.muted).child("claude.ai"))
+        .child(div().flex_1())
+        .when(this.hint, (el) => el.child(div().text_size(10.5).text_color(t.dim).child(this.hint)))
+        .when(hot, (el) => el.child(this.tool("pin-link", "plus", "Pin the link in your clipboard", t, (cx) => this.pinLink(cx)))))
+      .child(v_flex().max_h(112).overflow_y_scrollbar()
+        .children([...this.links.map((l) => this.linkRow(l.name, l.url, t, true)), ...DEFAULT_LINKS.map(([n, u]) => this.linkRow(n, u, t, false))]));
   }
 
   render(_cx) {
@@ -167,7 +279,7 @@ export default class Sessions extends View {
       .on_key_down((e, cx) => {
         if (e.key === "escape" && this.menu) { this.menu = false; cx.stop_propagation(); cx.notify(); } // Esc closes the menu first
       })
-      .when(this.popup, (e) => e.w_full().h(520), (e) => e.size_full()).bg(this.popup ? t.popover : t.surface).text_size(12)
+      .when(this.popup, (e) => e.w_full().h(560), (e) => e.size_full()).bg(this.popup ? t.popover : t.surface).text_size(12)
       .child(h_flex().items_center().gap(6).px(14).pt(12).pb(8)
         .child(div().flex_1().text_size(12.5).font_semibold().text_color(t.foreground).child("Sessions"))
         .child(div().id("sessions-sort").p(4).rounded(5).cursor_pointer()
@@ -182,7 +294,7 @@ export default class Sessions extends View {
       .child(h_flex().h(28).flex_none().mx(12).mb(6).px(8).items_center().rounded(6).border_1().border_color(t.border).bg(t.background)
         .child(Input.new(this.input).flex_1().h_full().text_size(11.5).text_color(t.foreground)))
       .child(list)
-      .child(h_flex().gap(4).p(6).border_t(1).border_color(t.border).children(LINKS.map((l) => this.link(l, t))))
+      .child(this.linksView(t))
       // A transparent layer under the menu: any click outside it only closes the menu.
       .when(this.menu, (el) => el
         .child(div().id("sessions-menu-away").absolute().inset_0()

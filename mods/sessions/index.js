@@ -60,6 +60,23 @@ function readSession(file, dir) {
   }
 }
 
+// Claude Code keeps one small file per running process in ~/.claude/sessions/<pid>.json.
+// A session is "live" when its process is still alive (signal 0 only checks, it sends nothing).
+function liveIds() {
+  const dir = path.join(os.homedir(), ".claude", "sessions");
+  const ids = new Set();
+  let files = [];
+  try { files = fs.readdirSync(dir).filter((f) => f.endsWith(".json")); } catch { return ids; }
+  for (const f of files) {
+    try {
+      const j = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
+      if (!j.sessionId || !j.pid) continue;
+      try { process.kill(j.pid, 0); ids.add(j.sessionId); } catch (e) { if (e.code === "EPERM") ids.add(j.sessionId); }
+    } catch {}
+  }
+  return ids;
+}
+
 const sessions = [];
 let dirs = [];
 try { dirs = fs.readdirSync(ROOT); } catch {}
@@ -74,5 +91,7 @@ for (const d of dirs) {
     } catch {}
   }
 }
+const live = liveIds();
+for (const s of sessions) s.live = live.has(s.id);
 sessions.sort((a, b) => b.mtime - a.mtime);
 process.stdout.write(JSON.stringify(sessions));
