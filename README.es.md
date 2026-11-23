@@ -78,7 +78,7 @@ Imprime JSON. Nunca escribe, no envía nada por la red e ignora las transcripcio
 - Una ventana privada del navegador comparte su sesión solo mientras haya una ventana privada abierta; si no, pedirá iniciar sesión otra vez.
 - Saltar a una sesión en marcha busca su terminal por el nombre de la sesión que aparece en el título de la pestaña. Dos sesiones de Claude con el mismo nombre, o una que corra fuera de herdr, no se pueden emparejar y muestran "running outside herdr".
 - Las sesiones sin título generado por la IA muestran su primer prompt.
-- Las filas de Codex y Antigravity llevan una insignia `codex` / `agy`, y escribir el nombre del agente en el buscador filtra por él.
+- Las filas de Codex y Antigravity llevan una insignia `codex` / `agy`. Cuando dos o más agentes tienen sesiones, una fila de chips (All, Claude, Codex, Agy, cada uno con su contador) bajo el buscador filtra por agente; con un solo agente queda oculta.
 - Solo las sesiones de Claude Code se detectan como en marcha. Una fila de Codex o Antigravity siempre abre una pestaña nueva, así que comprueba que no esté ya abierta.
 - Cursor CLI aún no es compatible: no está instalado en el equipo donde se hizo esto, así que su formato de historial no está verificado. Se agradece una contribución (ver `CONTRIBUTING.md`).
 - Se omiten las sesiones de Antigravity sin carpeta, como las iniciadas desde su IDE.

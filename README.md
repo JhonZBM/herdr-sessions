@@ -78,7 +78,7 @@ It prints JSON. It never writes, never sends anything over the network and ignor
 - A private browser window shares its login only while a private window stays open; otherwise it asks you to sign in again.
 - Jumping to a running session matches its terminal by the session name shown in the tab title. Two Claude sessions with the same name, or one running outside herdr, cannot be matched and show "running outside herdr".
 - Sessions without an AI-generated title show their first prompt.
-- Codex and Antigravity rows show a small `codex` / `agy` badge, and typing the agent's name in the search box filters by it.
+- Codex and Antigravity rows show a small `codex` / `agy` badge. When two or more agents have sessions, a row of chips (All, Claude, Codex, Agy, each with its count) under the search box filters by agent; with a single agent it stays hidden.
 - Only Claude Code sessions are detected as running. A Codex or Antigravity row always opens a new tab, so check that it is not already open.
 - Cursor CLI is not supported yet: it is not installed on the machine this was built on, so its history format is unverified. A contribution is welcome (see `CONTRIBUTING.md`).
 - Antigravity sessions without a folder, such as ones started from its IDE, are skipped.
