@@ -142,31 +142,37 @@ function codex() {
   return out;
 }
 
-// ---- Antigravity (agy): ~/.gemini/antigravity/conversation_summaries.db (SQLite) ------------
+// ---- Antigravity (agy): ~/.gemini/antigravity-cli/conversation_summaries.db (SQLite) ------------
 // Read-only through node:sqlite (built into Node 22.5+); skipped when it is missing.
 
 function agy() {
-  const db = path.join(HOME, ".gemini", "antigravity", "conversation_summaries.db");
-  if (!fs.existsSync(db)) return [];
+  // The CLI (agy) and the IDE each keep their own summaries database.
+  const dbs = ["antigravity-cli", "antigravity"].map((d) => path.join(HOME, ".gemini", d, "conversation_summaries.db")).filter((f) => fs.existsSync(f));
+  if (!dbs.length) return [];
   const { DatabaseSync } = require("node:sqlite");
-  const d = new DatabaseSync(db, { readOnly: true });
-  try {
-    const rows = d.prepare(
-      "SELECT conversation_id id, title, preview, last_modified_time t, workspace_uris w FROM conversation_summaries " +
-      "WHERE parent_conversation_id = '' AND step_count > 0 ORDER BY last_modified_time DESC LIMIT ?"
-    ).all(MAX_OTHER);
-    const out = [];
-    for (const r of rows) {
-      const uri = String(r.w || "").split(/[\s,;\[\]"]+/).find((u) => u.startsWith("file://"));
-      if (!uri) continue;
-      let cwd = decodeURIComponent(uri.replace(/^file:\/\//, ""));
-      if (/^\/[A-Za-z]:/.test(cwd)) cwd = cwd.slice(1);
-      out.push(session("agy", { id: r.id, cwd, title: r.title || String(r.preview || "").slice(0, 80), last: r.preview, mtime: Date.parse(r.t) || 0 }));
-    }
-    return out;
-  } finally {
-    d.close();
+  const out = new Map();
+  for (const db of dbs) {
+    try {
+      const d = new DatabaseSync(db, { readOnly: true });
+      try {
+        const rows = d.prepare(
+          "SELECT conversation_id id, title, preview, last_modified_time t, workspace_uris w FROM conversation_summaries " +
+          "WHERE parent_conversation_id = '' AND step_count > 0 ORDER BY last_modified_time DESC LIMIT ?"
+        ).all(MAX_OTHER);
+        for (const r of rows) {
+          const uri = String(r.w || "").split(/[\s,;\[\]"]+/).find((u) => u.startsWith("file://"));
+          if (!uri || out.has(r.id)) continue;
+          let cwd = decodeURIComponent(uri.replace(/^file:\/\//, ""));
+          if (/^\/[A-Za-z]:/.test(cwd)) cwd = cwd.slice(1);
+          if (/^[A-Za-z]:/.test(cwd)) cwd = cwd.replace(/\//g, "\\"); // same spelling as the other agents: one folder, one group
+          out.set(r.id, session("agy", { id: r.id, cwd, title: r.title || String(r.preview || "").slice(0, 80), last: r.preview, mtime: Date.parse(r.t) || 0 }));
+        }
+      } finally {
+        d.close();
+      }
+    } catch {}
   }
+  return [...out.values()];
 }
 
 // ---- Run: one agent failing never hides the others ------------------------------------------
