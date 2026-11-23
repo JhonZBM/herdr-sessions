@@ -68,7 +68,7 @@ Each agent already keeps its history on disk, and `index.js` reads it (one small
 |---|---|---|
 | Claude Code | `~/.claude/projects/<folder>/<id>.jsonl`: first 48 KB and last 96 KB of each file | `claude --resume <id>` |
 | Codex | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` (header only) and `~/.codex/session_index.jsonl` for names; newest 200 | `codex --no-daemon resume <id>` |
-| Antigravity | `~/.gemini/antigravity/conversation_summaries.db`, read-only through Node's built-in `node:sqlite`; newest 200 | `agy --conversation <id>` |
+| Antigravity | `~/.gemini/antigravity-cli/conversation_summaries.db` (and the IDE one in `~/.gemini/antigravity`), read-only through Node's built-in `node:sqlite`; newest 200 | `agy --conversation <id>` |
 
 It prints JSON. It never writes, never sends anything over the network and ignores sub-agent transcripts.
 
