@@ -1,8 +1,8 @@
-# Claude Sessions
+# Agent Sessions
 
-A popup for the herdr app that lists every Claude Code session on this computer, grouped by folder. Typing filters the list, a click resumes a session in a new tab, and two buttons open claude.ai Projects and Chats in the browser. The same view can be docked as a 300 px side panel.
+A popup for the herdr app that lists every Claude Code, Codex and Antigravity session on this computer, grouped by folder. Typing filters the list, a click resumes a session in a new tab, and two buttons open claude.ai Projects and Chats in the browser. The same view can be docked as a 300 px side panel.
 
-![Claude Sessions](preview.png)
+![Agent Sessions](preview.png)
 
 ## What you see
 
@@ -33,9 +33,9 @@ Folders are ordered by their newest session; sessions inside a folder are newest
 
 ## Built from
 
-- `mods/sessions/mod.json`: `{ "place": "none", "title": "Sessions", "overlay": { "kind": "popup", "at": "top", "offset": 48, "width": 520, "height": 0.8 } }`.
+- `mods/sessions/mod.json`: `{ "place": "none", "title": "Agent Sessions", "overlay": { "kind": "popup", "at": "top", "offset": 48, "width": 520, "height": 0.8 } }`.
 - `mods/sessions/keys.json`: `{ "global": { "ctrl-shift-s": "mod.open:sessions" } }`, to merge into the person's keys.
-- `mods/sessions/main.js`: a `View` using `gpui-kit` and `gpui-base` (`v_flex`, `h_flex`, `InputState`, `Input`, `overflow_y_scrollbar`), and from `herdr`: `exec`, `home`, `run`, `theme`, `props`, `closeOverlay`, `agents`, `panes`, `window`. `props()?.overlay` (`props()` can be null) tells the popup from a docked block: the popup uses a fixed 560 px height, `popover` fill, focuses the search and closes itself when a session opens. All colors come from `theme()`.
+- `mods/sessions/main.js`: an `AGENTS` table (`claude`, `codex`, `agy`) with the badge label (empty for Claude), `resume(id)` argv and `fresh` argv of each: `claude --resume <id>`, `codex --no-daemon resume <id>` (herdr needs `--no-daemon`; the shared daemon would reuse the first terminal), `agy --conversation <id>`. A non-Claude row shows its label in 9.5 px `dim` before the age and the label is part of the search text; the folder's `+` starts the agent of its newest session. Only Claude rows can be `live`. A `View` using `gpui-kit` and `gpui-base` (`v_flex`, `h_flex`, `InputState`, `Input`, `overflow_y_scrollbar`), and from `herdr`: `exec`, `home`, `run`, `theme`, `props`, `closeOverlay`, `agents`, `panes`, `window`. `props()?.overlay` (`props()` can be null) tells the popup from a docked block: the popup uses a fixed 560 px height, `popover` fill, focuses the search and closes itself when a session opens. All colors come from `theme()`.
 - `mods/sessions/index.js`: plain Node, no dependencies. Run with `exec("node", [<home>/.config/herdr-app/mods/sessions/index.js])`. For every `~/.claude/projects/<folder>/*.jsonl` it reads the first 48 KB and the last 96 KB, parses each complete JSON line and takes `cwd`, `gitBranch`, the last `ai-title`, `last-prompt` and `agent-name`. It prints a JSON array of `{id, cwd, project, worktree, title, name, last, branch, mtime, live}` sorted by `mtime` descending. `live` is true when `~/.claude/sessions/<pid>.json` names the session and `process.kill(pid, 0)` finds that process alive. Transcripts without a `cwd` are skipped. A path containing `.claude/worktrees` marks a worktree.
 - Icons (`close.svg`, `refresh.svg`, `external.svg`, `chevron-down.svg`, `chevron-right.svg`, `plus.svg`, `sort.svg`, `check.svg`): one-color SVGs tinted by the text color. Hover uses `on_hover` with one state field and calls `cx.notify()` only when it changes; no timers.
 - `mods/sessions-button/` (`main.js`, `mod.json` with `"place": "none"`, `history.svg`): a 26 px high button, 12 px text, 8 px horizontal padding, 14 px icon plus the label "Sessions"; fill `chrome`, text `muted`, hover `hover` fill and `foreground` text, same bottom border as the tab bar; tooltip "Session history (Ctrl+Shift+S)". Click: `run("mod.open", { name: "sessions" })`; its mouse-down is stopped so it does not start a window drag. `h_flex` comes from `gpui-base`, not `gpui-kit`. In a layout it sits in a `tabbar` row (112 px) to the left of the `tabs` block: `{ "id": "tabbar", "type": "row", "size": { "px": 30 }, "window_drag": true, "children": [ <sessions-button block, 112 px>, <tabs block, weight 1> ] }`; use the height the `tabs` block already has.
@@ -45,6 +45,8 @@ Folders are ordered by their newest session; sessions inside a folder are newest
 
 - The popup's height is set in the view (`.h(560)`); `mod.json` alone did not apply it. Keep both in step.
 - When docking, a layout that already holds a `sessions` block gets no second one from `place`; renaming the mod makes herdr add another block, so remove the duplicate.
+- Per-agent readers in `index.js` (all fields identical, plus `agent`): Claude as before; Codex walks `~/.codex/sessions/YYYY/MM/DD` newest first (200 files at most), reads the head, takes `id`/`cwd` from the first `session_meta`, the name from `session_index.jsonl` (`thread_name`) or else the first `UserMessage` line that is not a heading; Antigravity reads `conversation_summaries` (`step_count > 0`, no parent conversation, `file://` folder from `workspace_uris`, title or preview) through `node:sqlite` opened `readOnly`, skipped when the file or the module is missing. Each reader runs in its own try/catch.
+- Cursor CLI is not read: it was not installed where this was built, so its format is unverified.
 - Only local sessions exist on disk. claude.ai Projects, scheduled tasks and cloud sessions cannot be listed, which is why those are links.
 - Reading 100+ MB of transcripts whole would be slow; keep the head and tail limits.
 - The browser launch commands were composed and checked in a dry run but never executed on every platform: whether `start brave` finds Brave depends on it being listed in the App Paths registry, and whether Edge accepts `--new-window` through `start msedge` with no window open is unverified.

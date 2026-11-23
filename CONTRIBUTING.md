@@ -5,6 +5,7 @@ Thanks for looking. Issues and PRs are welcome, in English or Spanish.
 ## What fits
 
 - Fixes for macOS or Linux: this was built and tested on Windows only, so reports there are the most useful. In particular the browser launch commands (`start brave`, `open -na`, `<browser> --incognito`).
+- Another agent CLI: add a reader to `mods/sessions/index.js` (same fields as the others plus `agent`, capped at 200 sessions, failing silently) and a row to `AGENTS` in `mods/sessions/main.js`. Cursor CLI is the open one: it needs someone who has it installed to confirm where it keeps its history.
 - Another browser or mode in the link chooser, following `launchArgv` in `mods/sessions/main.js`.
 - Polish that keeps the popup compact and theme-agnostic (colors only from `theme()`).
 

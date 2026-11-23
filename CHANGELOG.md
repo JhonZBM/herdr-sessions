@@ -5,6 +5,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-22
+
+### Added
+- Codex sessions, read from `~/.codex/sessions` and `session_index.jsonl`, resumed with `codex --no-daemon resume <id>`.
+- Antigravity sessions, read from `~/.gemini/antigravity/conversation_summaries.db` through Node's built-in `node:sqlite` (read-only), resumed with `agy --conversation <id>`.
+- A small `codex` / `agy` badge on those rows, searchable; the folder's "+" starts the agent of its newest session.
+
+### Changed
+- The mod is listed as "Agent Sessions".
+- `index.js` is split into one isolated reader per agent; a missing agent never hides the others.
+- Cursor CLI is documented as not supported yet.
+
 ## [0.1.0] - 2026-11-22
 
 ### Changed
@@ -21,5 +33,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - A "claude.ai" section: your own pinned links (from the clipboard, `claude.ai` links only) plus Projects and Chats shortcuts.
 - "Open links in" chip on the claude.ai heading, always showing the current choice and opening a dropdown to change it. Browser (Default, Brave, Chrome, Edge, Firefox) and mode (Normal, New window, Private) are chosen separately, so any combination works; a previously saved combined choice is migrated. Each link's tooltip says where it will open.
 
-[Unreleased]: https://github.com/JhonZBM/herdr-sessions/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/JhonZBM/herdr-sessions/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/JhonZBM/herdr-sessions/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/JhonZBM/herdr-sessions/releases/tag/v0.1.0

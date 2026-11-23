@@ -2,14 +2,14 @@
 
 <h1>herdr-sessions</h1>
 
-<p><b>Claude Sessions</b>: your Claude Code session history, inside herdr</p>
+<p><b>Agent Sessions</b>: your Claude Code, Codex and Antigravity session history, inside herdr</p>
 
 [Español](README.es.md)
 
 [![License: MIT](https://img.shields.io/github/license/JhonZBM/herdr-sessions?style=flat-square)](LICENSE)
 [![Node](https://img.shields.io/badge/node-required-5FA04E?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 
-A [herdr](https://herdr.dev) mod: a popup with every Claude Code session you have run, grouped by folder. Press a key, search, click, and the session resumes in a new tab. It takes no screen space until you open it.
+A [herdr](https://herdr.dev) mod: a popup with every Claude Code, Codex and Antigravity session you have run, grouped by folder. Press a key, search, click, and the session resumes in a new tab. It takes no screen space until you open it.
 
 ![herdr-sessions](preview.png)
 
@@ -28,7 +28,7 @@ A [herdr](https://herdr.dev) mod: a popup with every Claude Code session you hav
 
 ## Install
 
-Requirements: herdr-app (open it once), Node and Claude Code. Built and tested on Windows 11; macOS and Linux should work but are untested.
+Requirements: herdr-app (open it once), Node and at least one of Claude Code, Codex or Antigravity (`agy`). Antigravity needs Node 22.5 or newer. Built and tested on Windows 11; macOS and Linux should work but are untested.
 
 **Easiest:** ask an agent in herdr to add this repo as a mod:
 
@@ -62,7 +62,15 @@ Then `layout.toggle:sessions` shows or hides it.
 
 ## How it works
 
-Claude Code stores each conversation as a transcript in `~/.claude/projects/<folder>/<session-id>.jsonl`. `index.js` reads only the first 48 KB and the last 96 KB of each file to get the title, last prompt, working folder and branch, and prints JSON. It never writes, never sends anything over the network and ignores sub-agent transcripts.
+Each agent already keeps its history on disk, and `index.js` reads it (one small reader per agent, each isolated, so a missing agent never hides the others):
+
+| Agent | Reads | Resumes with |
+|---|---|---|
+| Claude Code | `~/.claude/projects/<folder>/<id>.jsonl`: first 48 KB and last 96 KB of each file | `claude --resume <id>` |
+| Codex | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` (header only) and `~/.codex/session_index.jsonl` for names; newest 200 | `codex --no-daemon resume <id>` |
+| Antigravity | `~/.gemini/antigravity/conversation_summaries.db`, read-only through Node's built-in `node:sqlite`; newest 200 | `agy --conversation <id>` |
+
+It prints JSON. It never writes, never sends anything over the network and ignores sub-agent transcripts.
 
 ## Limits
 
@@ -70,7 +78,10 @@ Claude Code stores each conversation as a transcript in `~/.claude/projects/<fol
 - A private browser window shares its login only while a private window stays open; otherwise it asks you to sign in again.
 - Jumping to a running session matches its terminal by the session name shown in the tab title. Two Claude sessions with the same name, or one running outside herdr, cannot be matched and show "running outside herdr".
 - Sessions without an AI-generated title show their first prompt.
-- Only Claude Code is supported for now.
+- Codex and Antigravity rows show a small `codex` / `agy` badge, and typing the agent's name in the search box filters by it.
+- Only Claude Code sessions are detected as running. A Codex or Antigravity row always opens a new tab, so check that it is not already open.
+- Cursor CLI is not supported yet: it is not installed on the machine this was built on, so its history format is unverified. A contribution is welcome (see `CONTRIBUTING.md`).
+- Antigravity sessions without a folder, such as ones started from its IDE, are skipped.
 
 ## Contributing
 

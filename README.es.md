@@ -2,14 +2,14 @@
 
 <h1>herdr-sessions</h1>
 
-<p><b>Claude Sessions</b>: tu historial de sesiones de Claude Code, dentro de herdr</p>
+<p><b>Agent Sessions</b>: tu historial de sesiones de Claude Code, Codex y Antigravity, dentro de herdr</p>
 
 [English](README.md)
 
 [![License: MIT](https://img.shields.io/github/license/JhonZBM/herdr-sessions?style=flat-square)](LICENSE)
 [![Node](https://img.shields.io/badge/node-required-5FA04E?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 
-Un mod de [herdr](https://herdr.dev): un popup con todas las sesiones de Claude Code que has abierto, agrupadas por carpeta. Pulsas una tecla, buscas, haces clic y la sesión se reanuda en una pestaña nueva. No ocupa pantalla hasta que lo abres.
+Un mod de [herdr](https://herdr.dev): un popup con todas las sesiones de Claude Code, Codex y Antigravity que has abierto, agrupadas por carpeta. Pulsas una tecla, buscas, haces clic y la sesión se reanuda en una pestaña nueva. No ocupa pantalla hasta que lo abres.
 
 ![herdr-sessions](preview.png)
 
@@ -28,7 +28,7 @@ Un mod de [herdr](https://herdr.dev): un popup con todas las sesiones de Claude 
 
 ## Instalación
 
-Requisitos: herdr-app (ábrela una vez), Node y Claude Code. Hecho y probado en Windows 11; macOS y Linux deberían funcionar pero no están probados.
+Requisitos: herdr-app (ábrela una vez), Node y al menos uno de Claude Code, Codex o Antigravity (`agy`). Antigravity necesita Node 22.5 o superior. Hecho y probado en Windows 11; macOS y Linux deberían funcionar pero no están probados.
 
 **Lo más fácil:** pide a un agente de herdr que añada este repo como mod:
 
@@ -62,7 +62,15 @@ Después `layout.toggle:sessions` lo muestra u oculta.
 
 ## Cómo funciona
 
-Claude Code guarda cada conversación como una transcripción en `~/.claude/projects/<carpeta>/<id-de-sesión>.jsonl`. `index.js` lee solo los primeros 48 KB y los últimos 96 KB de cada archivo para sacar el título, el último prompt, la carpeta de trabajo y la rama, e imprime JSON. Nunca escribe, no envía nada por la red e ignora las transcripciones de subagentes.
+Cada agente ya guarda su historial en disco y `index.js` lo lee (un lector pequeño por agente, cada uno aislado, así que un agente ausente nunca oculta a los demás):
+
+| Agente | Lee | Reanuda con |
+|---|---|---|
+| Claude Code | `~/.claude/projects/<carpeta>/<id>.jsonl`: primeros 48 KB y últimos 96 KB de cada archivo | `claude --resume <id>` |
+| Codex | `~/.codex/sessions/AAAA/MM/DD/rollout-*.jsonl` (solo la cabecera) y `~/.codex/session_index.jsonl` para los nombres; las 200 más recientes | `codex --no-daemon resume <id>` |
+| Antigravity | `~/.gemini/antigravity/conversation_summaries.db`, en solo lectura con el `node:sqlite` que trae Node; las 200 más recientes | `agy --conversation <id>` |
+
+Imprime JSON. Nunca escribe, no envía nada por la red e ignora las transcripciones de subagentes.
 
 ## Límites
 
@@ -70,7 +78,10 @@ Claude Code guarda cada conversación como una transcripción en `~/.claude/proj
 - Una ventana privada del navegador comparte su sesión solo mientras haya una ventana privada abierta; si no, pedirá iniciar sesión otra vez.
 - Saltar a una sesión en marcha busca su terminal por el nombre de la sesión que aparece en el título de la pestaña. Dos sesiones de Claude con el mismo nombre, o una que corra fuera de herdr, no se pueden emparejar y muestran "running outside herdr".
 - Las sesiones sin título generado por la IA muestran su primer prompt.
-- Por ahora solo es compatible con Claude Code.
+- Las filas de Codex y Antigravity llevan una insignia `codex` / `agy`, y escribir el nombre del agente en el buscador filtra por él.
+- Solo las sesiones de Claude Code se detectan como en marcha. Una fila de Codex o Antigravity siempre abre una pestaña nueva, así que comprueba que no esté ya abierta.
+- Cursor CLI aún no es compatible: no está instalado en el equipo donde se hizo esto, así que su formato de historial no está verificado. Se agradece una contribución (ver `CONTRIBUTING.md`).
+- Se omiten las sesiones de Antigravity sin carpeta, como las iniciadas desde su IDE.
 
 ## Contribuir
 
