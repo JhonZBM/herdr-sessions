@@ -1,8 +1,8 @@
-# Sessions
+# Claude Sessions
 
 A popup for the herdr app that lists every Claude Code session on this computer, grouped by folder. Typing filters the list, a click resumes a session in a new tab, and two buttons open claude.ai Projects and Chats in the browser. The same view can be docked as a 300 px side panel.
 
-![Sessions](preview.png)
+![Claude Sessions](preview.png)
 
 ## What you see
 

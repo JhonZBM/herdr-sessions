@@ -2,6 +2,8 @@
 
 <h1>herdr-sessions</h1>
 
+<p><b>Claude Sessions</b>: your Claude Code session history, inside herdr</p>
+
 [Español](README.es.md)
 
 [![License: MIT](https://img.shields.io/github/license/JhonZBM/herdr-sessions?style=flat-square)](LICENSE)
