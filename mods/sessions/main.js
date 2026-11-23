@@ -1,4 +1,4 @@
-// Sessions: your Claude Code sessions grouped by folder, with search and resume.
+// Sessions: your Claude Code, Codex and Antigravity sessions grouped by folder, with search and resume.
 // Same view in two modes: popup (mod.open sessions, the default) or a docked block in a layout.
 // Reads ~/.claude/projects only on open and on refresh (no timers).
 import { View, div, svg } from "gpui-kit";
@@ -10,6 +10,15 @@ const ICON = (name) => `mods/sessions/${name}.svg`;
 const pref = (k, d) => { try { return localStorage.getItem(`sessions.${k}`) ?? d; } catch { return d; } };
 const setPref = (k, v) => { try { localStorage.setItem(`sessions.${k}`, v); } catch {} };
 const DEFAULT_LINKS = [["Projects", "https://claude.ai/projects"], ["Chats", "https://claude.ai/recents"]];
+// One row per agent CLI: the badge shown on its rows, how to resume a session and how to start a new one.
+// Codex needs --no-daemon (herdr gives each terminal its own process; the shared daemon would reuse the first).
+const AGENTS = {
+  claude: { label: "", resume: (id) => ["claude", "--resume", id], fresh: ["claude"] },
+  codex: { label: "codex", resume: (id) => ["codex", "--no-daemon", "resume", id], fresh: ["codex", "--no-daemon"] },
+  agy: { label: "agy", resume: (id) => ["agy", "--conversation", id], fresh: ["agy"] },
+};
+const agentOf = (s) => AGENTS[s.agent] ?? AGENTS.claude;
+
 const URL_RE = /^https:\/\/claude\.ai\/[\w\-./?=%#]*$/; // the only links that are ever stored or launched
 // Browsers: [id, short label, windows exe, macOS app, linux exe, private flag, new-window flag]
 const BROWSERS = [
@@ -138,7 +147,7 @@ export default class Sessions extends View {
       }
       return;
     }
-    run("tab.new", { name: s.title.slice(0, 40), folder: s.cwd, argv: ["claude", "--resume", s.id] });
+    run("tab.new", { name: s.title.slice(0, 40), folder: s.cwd, argv: agentOf(s).resume(s.id) });
     if (this.popup) closeOverlay(props()?.overlay); // get out of the way once a session opens
   }
 
@@ -175,7 +184,7 @@ export default class Sessions extends View {
     const q = this.filter;
     const by = new Map();
     for (const s of this.sessions) {
-      if (q && !`${s.title} ${s.last} ${s.cwd} ${s.branch}`.toLowerCase().includes(q)) continue;
+      if (q && !`${s.title} ${s.last} ${s.cwd} ${s.branch} ${agentOf(s).label}`.toLowerCase().includes(q)) continue;
       if (!by.has(s.cwd)) by.set(s.cwd, { cwd: s.cwd, project: s.project, worktree: s.worktree, items: [] });
       by.get(s.cwd).items.push(s);
     }
@@ -196,11 +205,13 @@ export default class Sessions extends View {
       .tooltip(tip)
       .when(s.live, (el) => el.child(div().size(6).flex_none().rounded(3).bg(t.accent)))
       .child(div().flex_1().min_w(0).truncate().text_size(12.5).text_color(t.foreground).child(s.title))
+      .when(!!agentOf(s).label, (el) => el.child(div().flex_none().text_size(9.5).text_color(t.dim).child(agentOf(s).label)))
       .child(div().flex_none().text_size(10.5).text_color(t.dim).child(this.notice === s.id ? "running outside herdr" : ago(s.mtime)));
   }
 
   newSession(g) {
-    run("tab.new", { name: g.project, folder: g.cwd, argv: ["claude"] });
+    // The agent of the folder's most recent session (items are sorted newest first).
+    run("tab.new", { name: g.project, folder: g.cwd, argv: agentOf(g.items[0] ?? {}).fresh });
     if (this.popup) closeOverlay(props()?.overlay);
   }
 
