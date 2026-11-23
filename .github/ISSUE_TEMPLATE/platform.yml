@@ -1,0 +1,23 @@
+name: Tested on my system
+description: Tell us if it works on macOS or Linux
+labels: [compatibility]
+body:
+  - type: input
+    id: system
+    attributes:
+      label: OS
+      placeholder: macOS 15, Ubuntu 24.04…
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: herdr-app and Node versions
+      placeholder: herdr-app 0.1.16, Node 24
+  - type: textarea
+    id: result
+    attributes:
+      label: What worked and what did not
+      description: Listing, resume, jump to a running session, and which browser and mode you tried for claude.ai links.
+    validations:
+      required: true
