@@ -13,9 +13,9 @@ const DEFAULT_LINKS = [["Projects", "https://claude.ai/projects"], ["Chats", "ht
 // One row per agent CLI: the badge shown on its rows, how to resume a session and how to start a new one.
 // Codex needs --no-daemon (herdr gives each terminal its own process; the shared daemon would reuse the first).
 const AGENTS = {
-  claude: { label: "", resume: (id) => ["claude", "--resume", id], fresh: ["claude"] },
-  codex: { label: "codex", resume: (id) => ["codex", "--no-daemon", "resume", id], fresh: ["codex", "--no-daemon"] },
-  agy: { label: "agy", resume: (id) => ["agy", "--conversation", id], fresh: ["agy"] },
+  claude: { name: "Claude", label: "", resume: (id) => ["claude", "--resume", id], fresh: ["claude"] },
+  codex: { name: "Codex", label: "codex", resume: (id) => ["codex", "--no-daemon", "resume", id], fresh: ["codex", "--no-daemon"] },
+  agy: { name: "Agy", label: "agy", resume: (id) => ["agy", "--conversation", id], fresh: ["agy"] },
 };
 const agentOf = (s) => AGENTS[s.agent] ?? AGENTS.claude;
 
@@ -81,6 +81,7 @@ export default class Sessions extends View {
     this.loading = true;
     this.error = "";
     this.filter = "";
+    this.agent = "all"; // agent filter: all | claude | codex | agy
     this.collapsed = {};
     this.links = loadLinks();
     [this.browser, this.mode] = loadChoice();
@@ -184,6 +185,7 @@ export default class Sessions extends View {
     const q = this.filter;
     const by = new Map();
     for (const s of this.sessions) {
+      if (this.agent !== "all" && (s.agent ?? "claude") !== this.agent) continue;
       if (q && !`${s.title} ${s.last} ${s.cwd} ${s.branch} ${agentOf(s).label}`.toLowerCase().includes(q)) continue;
       if (!by.has(s.cwd)) by.set(s.cwd, { cwd: s.cwd, project: s.project, worktree: s.worktree, items: [] });
       by.get(s.cwd).items.push(s);
@@ -198,14 +200,15 @@ export default class Sessions extends View {
   row(s, t) {
     const branch = s.branch && s.branch !== "HEAD" ? `${s.branch}\n` : "";
     const tip = `${s.live ? "Open in herdr\n" : ""}${branch}${(s.last || s.title).slice(0, 110)}`;
-    return div().id(`s-${s.id}`).h_flex().items_center().gap(8).h(28).px(10).rounded(6).cursor_pointer()
+    return div().id(`s-${s.id}`).h_flex().items_center().gap(8).h(28).px(10).rounded(6).relative().cursor_pointer()
       .hover((x) => x.bg(t.hover))
       .active((x) => x.bg(t.selected))
       .on_click((_e, cx) => this.resume(s, cx))
       .tooltip(tip)
-      .when(s.live, (el) => el.child(div().size(6).flex_none().rounded(3).bg(t.accent)))
+      // The live dot sits in the left gutter so titles stay aligned.
+      .when(s.live, (el) => el.child(div().absolute().left(1).top(11).size(5).rounded(3).bg(t.accent)))
       .child(div().flex_1().min_w(0).truncate().text_size(12.5).text_color(t.foreground).child(s.title))
-      .when(!!agentOf(s).label, (el) => el.child(div().flex_none().text_size(9.5).text_color(t.dim).child(agentOf(s).label)))
+      .when(!!agentOf(s).label, (el) => el.child(div().flex_none().text_size(10).text_color(t.muted).child(agentOf(s).label)))
       .child(div().flex_none().text_size(10.5).text_color(t.dim).child(this.notice === s.id ? "running outside herdr" : ago(s.mtime)));
   }
 
@@ -239,7 +242,7 @@ export default class Sessions extends View {
       .tooltip(g.cwd)
       .child(div().min_w(0).truncate().text_size(12).font_bold().text_color(t.foreground).child(g.project))
       .child(svg(ICON(open ? "chevron-down" : "chevron-right")).size(13).flex_none().text_color(hot ? t.foreground : t.muted))
-      .when(g.worktree, (el) => el.child(div().flex_none().ml(2).text_size(9.5).text_color(t.dim).child("worktree")))
+      .when(g.worktree, (el) => el.child(div().flex_none().ml(2).text_size(10).text_color(t.dim).child("worktree")))
       .child(div().flex_1())
       .when(!hot, (el) => el.child(div().flex_none().text_size(10).text_color(t.dim).child(String(g.items.length))))
       .when(hot, (el) => el
@@ -338,8 +341,29 @@ export default class Sessions extends View {
         .children([...this.links.map((l) => this.linkRow(l.name, l.url, t, true)), ...DEFAULT_LINKS.map(([n, u]) => this.linkRow(n, u, t, false))]));
   }
 
+  // One chip per agent that has sessions, with its count; shown only when there are at least two.
+  agentRow(t) {
+    const n = {};
+    for (const s of this.sessions) n[s.agent ?? "claude"] = (n[s.agent ?? "claude"] ?? 0) + 1;
+    const keys = Object.keys(AGENTS).filter((k) => n[k]);
+    if (keys.length < 2) { this.agent = "all"; return null; }
+    if (this.agent !== "all" && !n[this.agent]) this.agent = "all";
+    const chip = (k, label, count) => {
+      const on = this.agent === k;
+      return h_flex().id(`agent-${k}`).h(20).px(8).gap(4).flex_none().items_center().rounded(10).cursor_pointer()
+        .when(on, (x) => x.bg(t.raised), (x) => x.hover((y) => y.bg(t.hover)))
+        .on_click((_e, cx) => { this.agent = k; cx.notify(); })
+        .child(div().text_size(11).text_color(on ? t.foreground : t.muted).child(label))
+        .child(div().text_size(10).text_color(t.dim).child(String(count)));
+    };
+    return h_flex().gap(4).flex_none().mx(12).mb(6).items_center()
+      .child(chip("all", "All", this.sessions.length))
+      .children(keys.map((k) => chip(k, AGENTS[k].name, n[k])));
+  }
+
   render(_cx) {
     const t = theme();
+    const agentRow = this.agentRow(t); // first: it may reset a stale agent filter
     const groups = this.groups();
     const list = v_flex().flex_1().min_h(0).px(6).pb(8).overflow_y_scrollbar();
     if (this.error) list.child(div().p(10).text_size(11).text_color(t.dim).child(`Could not read: ${this.error}`));
@@ -367,6 +391,7 @@ export default class Sessions extends View {
           .child(svg(ICON("refresh")).size(12).text_color(t.dim))))
       .child(h_flex().h(28).flex_none().mx(12).mb(6).px(8).items_center().rounded(6).border_1().border_color(t.border).bg(t.background)
         .child(Input.new(this.input).flex_1().h_full().text_size(11.5).text_color(t.foreground)))
+      .children([agentRow].filter(Boolean))
       .child(list)
       .child(this.linksView(t))
       // A transparent layer under the menu: any click outside it only closes the menu.
